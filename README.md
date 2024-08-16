@@ -1,5 +1,9 @@
 # RabbitMQ-NodeJs
 
+The project RabbitMQ use-case, follow the flow diagram below.
+
+![flow-diagram-demo](./assets/flow-diagram-simple-2.png)
+
 ## FLOW DIAGRAMS
 
 ### Simple Flow Diagram
@@ -9,7 +13,7 @@
 
 ---
 
-RabbitMQ flow with one producer (p1), one exchange (ex1), one queue (q1), and two consumers (c1 and c2).
+RabbitMQ flow with producers (p1, p2), one exchange (ex1), one queue (q1), and two consumers (c1 and c2).
 
 1. **Producer and Exchange:**
    - The producer (p1) sends messages to the exchange (ex1). The exchange type is not specified here, but for simplicity, we will assume it is a direct exchange.

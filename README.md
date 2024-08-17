@@ -109,20 +109,125 @@ The RabbitMQ is a message broker that uses the AMQP protocol to send and receive
 
 But first of all, lets understand the firsts steps to stablish the connection with the RabbitMQ server.
 
-### Connection
+**[required] Lib amqplib:**
 
 ```js
 const amqp = require('amqplib');
-(async () => {
-   const connection = await amqp.connect('amqp://guest:guest@localhost:5672');
-   /** 
-    * 
-    * @description The `createConfirmChannel` method returns the instance of ConfirmChannel that extends Channel.
-    * This increment the methods `waitForConfirms` and `waitForConfirmsOrDie`.
-    * 
-    * */
+```
+
+### Connection
+
+```js
+//                                     amqp://user:password@host:port
+const connection = await amqp.connect('amqp://guest:guest@localhost:5672');
+```
+
+> The connection Connect to an AMQP 0-9-1 server. Is used to open a network connection and create a channel.
+
+### Channel
+
+```js
+const channel = await connection.createChannel();
+```
+
+> A channel is a virtual connection to a server and it is asynchronous RPCs, almost all methods can respond with a promise or callback.
+> It is used to send and receive messages, publish and subscribe to queues, and to execute RPC commands.
+>
+
+### Exchange
+
+```js
+await channel.assertExchange('ex1', 'direct', { durable: true });
+```
+
+> An exchange is a named entity that receives messages from producers and routes them to queues.
+>
+
+### Queue
+
+```js
+await channel.assertQueue('q1', { durable: true });
+```
+
+> A queue is a named entity that receives messages from producers and routes them to consumers.
+>
+
+### Bind Queue to Exchange
+
+```js
+await channel.bindQueue('q1', 'ex1', 'ex1-q1');
+```
+
+> A binding is a relationship between an exchange and a queue.
+>
+
+### Consume Messages
+
+**Using the callback:**
+
+```js
+#!/usr/bin/env node
+
+var amqp = require('amqplib/callback_api');
+
+const QUEUE_NAME            =   'q1';
+const CONSUMER_OPTIONS      =   { noAck: false };
+
+amqp.connect('amqp://localhost:5672', function (error0, connection) {
+    if (error0) throw error0;
+    connection.createChannel(async function (error1, channel) {
+        if (error1) throw error1;
+        channel.consume(QUEUE_NAME, function (msg) {
+            let content = msg.content.toString();
+            if (msg.properties.type === 'application/json') {
+                content = JSON.parse(content);
+            }
+            console.log(" [x] Received: ", {content, fields: msg.fields, properties: msg.properties});
+            if (!msg.properties.replyTo) return channel.ack(msg);
+            console.log('Replying to %s', msg.properties.replyTo);
+            channel.sendToQueue(msg.properties.replyTo, msg.content, {
+                correlationId: msg.properties.correlationId
+            })
+
+            return channel.ack(msg);
+        }, CONSUMER_OPTIONS);
+
+        console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", QUEUE_NAME);
+    });
+});
+```
+
+**Using the await:**
+
+```js
+#!/usr/bin/env node
+var amqp = require('amqplib');
+const QUEUE_NAME            =   'q1';
+const CONSUMER_OPTIONS      =   { noAck: false };
+async function main() {
+   const connection = await amqp.connect('amqp://localhost:5672');
    const channel = await connection.createConfirmChannel();
-})()
+   await channel.assertQueue(QUEUE_NAME, { durable: true });
+   channel.consume(QUEUE_NAME, function (msg) {
+            let content = msg.content.toString();
+            if (msg.properties.type === 'application/json') {
+                content = JSON.parse(content);
+                // console.log("Json message: ", content);
+            }
+            console.log(" [x] Received: ", {content, fields: msg.fields, properties: msg.properties});
+            if (!msg.properties.replyTo) {
+                return channel.ack(msg);
+            }
+            console.log('Replying to %s', msg.properties.replyTo);
+            channel.sendToQueue(msg.properties.replyTo, msg.content, {
+                correlationId: msg.properties.correlationId
+            })
+
+            return channel.ack(msg);
+   }, CONSUMER_OPTIONS);
+   console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", QUEUE_NAME);
+}
+main();
 ```
 
 

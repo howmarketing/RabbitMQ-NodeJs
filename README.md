@@ -161,9 +161,16 @@ await channel.bindQueue('q1', 'ex1', 'ex1-q1');
 > A binding is a relationship between an exchange and a queue.
 >
 
-### Consume Messages
+### CONSUMER
 
-**Using the callback:**
+```js
+channel.consume(QUEUE_NAME, function (msg) {
+    console.log("Message:", msg.content.toString())
+    return channel.ack(msg);
+}, CONSUMER_OPTIONS);
+```
+
+**Using the callback implementation:**
 
 ```js
 #!/usr/bin/env node
@@ -197,7 +204,7 @@ amqp.connect('amqp://localhost:5672', function (error0, connection) {
 });
 ```
 
-**Using the await:**
+**Using the async await implementation:**
 
 ```js
 #!/usr/bin/env node
@@ -208,29 +215,70 @@ async function main() {
    const connection = await amqp.connect('amqp://localhost:5672');
    const channel = await connection.createConfirmChannel();
    await channel.assertQueue(QUEUE_NAME, { durable: true });
-   channel.consume(QUEUE_NAME, function (msg) {
-            let content = msg.content.toString();
-            if (msg.properties.type === 'application/json') {
-                content = JSON.parse(content);
-                // console.log("Json message: ", content);
-            }
-            console.log(" [x] Received: ", {content, fields: msg.fields, properties: msg.properties});
-            if (!msg.properties.replyTo) {
-                return channel.ack(msg);
-            }
-            console.log('Replying to %s', msg.properties.replyTo);
-            channel.sendToQueue(msg.properties.replyTo, msg.content, {
-                correlationId: msg.properties.correlationId
-            })
 
+   channel.consume(QUEUE_NAME, function (msg) {
+        let content = msg.content.toString();
+        if (msg.properties.type === 'application/json') {
+            content = JSON.parse(content);
+        }
+        console.log(" [x] Received: ", {content, fields: msg.fields, properties: msg.properties});
+        if (!msg.properties.replyTo) {
             return channel.ack(msg);
+        }
+        console.log('Replying to %s', msg.properties.replyTo);
+        channel.sendToQueue(msg.properties.replyTo, msg.content, {
+            correlationId: msg.properties.correlationId
+        })
+        return channel.ack(msg);
    }, CONSUMER_OPTIONS);
    console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", QUEUE_NAME);
 }
 main();
 ```
 
+### PRODUCER
 
+```js
+CONST QUEUE_NAME = 'q1';
+SEND_OPTIONS = { persistent: true, type: 'application/json' };
+```
+
+**Using the callback implementation:**
+
+```js
+channel.sendToQueue(
+    QUEUE_NAME,
+    Buffer.from(JSON.stringify(data)),
+    SEND_OPTIONS, 
+    (err: any, ok: Replies.Empty) => {
+        if (err) {
+            console.log("Error sending message to queue:", err);
+            return;
+        }
+        console.log("Message sent to queue");
+    }
+);
+```
+
+**Using the async await implementation:**
+
+```js
+const ok = await new Promise((resolve, _) => {
+    channel.sendToQueue(
+        QUEUE_NAME,
+        Buffer.from(JSON.stringify(data)),
+        SEND_OPTIONS,
+        (err: any, ok: Replies.Empty) => {
+            if (err) {
+                console.log("Error sending message to queue:", err);
+                resolve(false);
+            }
+            console.log("Message sent to queue");
+            resolve(true);
+        }
+    );
+});
+```
 
 ## FLOW DIAGRAMS
 

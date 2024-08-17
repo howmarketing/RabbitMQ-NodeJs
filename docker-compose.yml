@@ -1,0 +1,11 @@
+services:
+  rabbitmq_standalone:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - "rabbitmq_standalone:/var/lib/rabbitmq"
+
+volumes:
+    rabbitmq_standalone:

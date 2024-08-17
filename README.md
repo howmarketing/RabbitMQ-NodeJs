@@ -280,6 +280,56 @@ const ok = await new Promise((resolve, _) => {
 });
 ```
 
+## RabbitMQ Operations
+
+### `createExchange(exchangeName, exchangeType, callback)`
+
+Creates a new exchange on the RabbitMQ server.
+
+- **exchangeName**: The name of the exchange to create.
+- **exchangeType**: The type of exchange to create (e.g., 'direct', 'fanout', etc.).
+- **callback**: A callback function to handle the result of the operation.
+
+---
+
+### `createQueue(queueName, callback)`
+
+Creates a new queue on the RabbitMQ server.
+
+- **queueName**: The name of the queue to create.
+- **callback**: A callback function to handle the result of the operation.
+
+---
+
+### `bindQueue(queueName, exchangeName, routingKey, callback)`
+
+Binds a queue to an exchange on the RabbitMQ server.
+
+- **queueName**: The name of the queue to bind.
+- **exchangeName**: The name of the exchange to bind to.
+- **routingKey**: The routing key to use for binding.
+- **callback**: A callback function to handle the result of the operation.
+
+---
+
+### `sendMessage(exchangeName, routingKey, message, callback)`
+
+Sends a message to an exchange on the RabbitMQ server.
+
+- **exchangeName**: The name of the exchange to send to.
+- **routingKey**: The routing key to use for sending.
+- **message**: The message to send.
+- **callback**: A callback function to handle the result of the operation.
+
+---
+
+### `receiveMessage(queueName, callback)`
+
+Receives a message from a queue on the RabbitMQ server.
+
+- **queueName**: The name of the queue to receive from.
+- **callback**: A callback function to handle the received message.
+
 ## FLOW DIAGRAMS
 
 ### Simple Flow Diagram
